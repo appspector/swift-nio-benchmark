@@ -2,5 +2,11 @@
   "name": "Dispatcher",
   "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "ws": "^6.1.4"
+  }
 }

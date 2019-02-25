@@ -2,3 +2,5 @@
 .buildzz
 *.xcuserstate
 workspace.xml
+*.log
+node_modules
