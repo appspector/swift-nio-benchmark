@@ -133,23 +133,24 @@ class SessionGroup {
 class Dispatcher {
     
     var sessions: [String: SessionGroup] = [:]
+    var syncQueue = DispatchQueue(label: "Dispatcher", attributes: .concurrent)
     
     func createSessionGroup(sessionID: String, channel: Channel) {
-        sessions[sessionID] = SessionGroup(sessionChannel: channel)
+        self.sessions[sessionID] = SessionGroup(sessionChannel: channel)
     }
     
     func removeSessionGroup(sessionID: String) {
-        if let group = sessions[sessionID] {
+        if let group = self.sessions[sessionID] {
             for channel in group.frontendChannels {
                 _ = channel.closeFuture
             }
         }
         
-        sessions.removeValue(forKey: sessionID)
+        self.sessions.removeValue(forKey: sessionID)
     }
     
     func removeFrontend(sessionID: String, channel: Channel) {
-        if let group = sessions[sessionID] {
+        if let group = self.sessions[sessionID] {
             channel.closeFuture.whenComplete {
                 group.frontendChannels.removeAll(where: { (ch) -> Bool in
                     return !ch.isActive
@@ -159,13 +160,13 @@ class Dispatcher {
     }
     
     func joinSessionGroup(sessionID: String, channel: Channel) {
-        if let group = sessions[sessionID] {
+        if let group = self.sessions[sessionID] {
             group.frontendChannels.append(channel)
         }
     }
     
     func dispatchEvent(sessionID: String, payload: String) {
-        if let group = sessions[sessionID] {
+        if let group = self.sessions[sessionID] {
             for channel in group.frontendChannels {
                 var buffer = channel.allocator.buffer(capacity: payload.utf8.count)
                 buffer.write(string: payload)
@@ -195,7 +196,7 @@ final class Server {
   
     init(configuration: Configuration = Configuration()) {
         self.configuration  = configuration
-        self.eventLoopGroup = configuration.eventLoopGroup ?? MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+        self.eventLoopGroup = configuration.eventLoopGroup ?? MultiThreadedEventLoopGroup(numberOfThreads: 1)
     }
   
     func listenAndWait() {

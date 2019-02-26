@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -38,6 +39,7 @@ func NewSessionGroup(socket *websocket.Conn) *SessionGroup {
 type Dispatcher struct {
 	Sessions   map[string]*SessionGroup
 	wsUpgrader websocket.Upgrader
+	Mutex      *sync.RWMutex
 }
 
 func NewDispatcher() *Dispatcher {
@@ -50,6 +52,7 @@ func NewDispatcher() *Dispatcher {
 			},
 		},
 		Sessions: make(map[string]*SessionGroup),
+		Mutex:    &sync.RWMutex{},
 	}
 }
 
@@ -75,7 +78,9 @@ func (d Dispatcher) create(w http.ResponseWriter, r *http.Request) {
 
 	sessionGroup := NewSessionGroup(socket)
 
+	d.Mutex.Lock()
 	d.Sessions[sessionId] = sessionGroup
+	d.Mutex.Unlock()
 
 	for {
 		messageType, rawMessage, err := socket.ReadMessage()
@@ -120,6 +125,7 @@ func (d Dispatcher) join(w http.ResponseWriter, r *http.Request) {
 		socket: socket,
 	}
 
+	d.Mutex.RLock()
 	sessionGroup := d.Sessions[sessionId]
 
 	if sessionGroup == nil {
@@ -128,6 +134,7 @@ func (d Dispatcher) join(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessionGroup.addFrontend(frontendConnection)
+	d.Mutex.RUnlock()
 
 	for {
 		_, _, err = socket.ReadMessage()
