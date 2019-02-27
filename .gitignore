@@ -4,3 +4,5 @@
 workspace.xml
 *.log
 node_modules
+build
+/perftest/main

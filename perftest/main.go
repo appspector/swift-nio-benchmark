@@ -89,7 +89,7 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	for i := 0; i < 20000; i++ {
+	for i := 0; i < 10000; i++ {
 		time.Sleep(time.Millisecond * 10)
 		go startProducer(SessionConfig{
 			host:      config.Host,
