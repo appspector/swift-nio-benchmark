@@ -7,6 +7,6 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "ws": "^6.1.4"
+    "ws": "^7.4.6"
   }
 }
